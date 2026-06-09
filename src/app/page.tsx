@@ -1,17 +1,19 @@
-import { getAnimeHome, getAdultVideos } from "@/lib/api";
+import { getAnimeHome, getAdultVideos, getBiliTVDramas } from "@/lib/api";
 import VideoCard from "@/components/VideoCard";
 import SectionHeader from "@/components/SectionHeader";
 import Link from "next/link";
-import { Play, Zap, Film, Flame } from "lucide-react";
+import { Play, Zap, Film, Flame, Tv } from "lucide-react";
 
 export default async function HomePage() {
-  const [animeData, adultData] = await Promise.all([
+  const [animeData, adultData, dramaData] = await Promise.all([
     getAnimeHome(1),
     getAdultVideos(1),
+    getBiliTVDramas(1),
   ]);
 
   const animeList = animeData?.anime?.slice(0, 12) || [];
   const adultList = adultData?.slice(0, 12) || [];
+  const dramaList = dramaData?.dramas?.slice(0, 12) || [];
 
   return (
     <div className="space-y-8 sm:space-y-12">
@@ -42,6 +44,13 @@ export default async function HomePage() {
             >
               <Film className="w-4 h-4" />
               Anime
+            </Link>
+            <Link
+              href="/drama"
+              className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 rounded-xl font-semibold text-sm sm:text-base transition-all active:scale-95"
+            >
+              <Tv className="w-4 h-4" />
+              Drama
             </Link>
             <Link
               href="/adult"
@@ -75,6 +84,26 @@ export default async function HomePage() {
                 href={`/anime/${anime.slug}`}
                 type={anime.type}
                 episode={anime.latest_episode}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Drama */}
+      {dramaList.length > 0 && (
+        <section>
+          <SectionHeader title="Drama Populer" subtitle="BiliTV & CashDrama" href="/drama" />
+          <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4 stagger-children">
+            {dramaList.map((drama) => (
+              <VideoCard
+                key={drama.id}
+                title={drama.title}
+                thumbnail={drama.cover}
+                slug={String(drama.id)}
+                href={`/drama/bilitv/${drama.id}`}
+                episode={`${drama.episodes} Ep`}
+                badge="Drama"
               />
             ))}
           </div>

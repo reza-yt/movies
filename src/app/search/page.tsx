@@ -1,12 +1,12 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
-import { Search, Film, Flame } from "lucide-react";
+import { Search, Film, Flame, Tv } from "lucide-react";
 import VideoCard from "@/components/VideoCard";
 import CinemaLoader from "@/components/CinemaLoader";
 import { useSearchParams } from "next/navigation";
 
-type SearchSource = "anime" | "adult";
+type SearchSource = "anime" | "adult" | "bilitv" | "cashdrama";
 
 interface SearchResult {
   title: string;
@@ -59,22 +59,38 @@ function SearchContent() {
       {/* Search form */}
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Source toggle */}
-        <div className="flex rounded-xl bg-white/5 border border-white/10 p-1">
+        <div className="flex rounded-xl bg-white/5 border border-white/10 p-1 overflow-x-auto scrollbar-hide">
           <button
             onClick={() => setSource("anime")}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition ${
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap ${
               source === "anime" ? "bg-red-500 text-white" : "text-gray-400 hover:text-white"
             }`}
           >
-            <Film className="w-4 h-4" /> Anime
+            <Film className="w-3.5 h-3.5" /> Anime
+          </button>
+          <button
+            onClick={() => setSource("bilitv")}
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap ${
+              source === "bilitv" ? "bg-blue-500 text-white" : "text-gray-400 hover:text-white"
+            }`}
+          >
+            <Tv className="w-3.5 h-3.5" /> BiliTV
+          </button>
+          <button
+            onClick={() => setSource("cashdrama")}
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap ${
+              source === "cashdrama" ? "bg-purple-500 text-white" : "text-gray-400 hover:text-white"
+            }`}
+          >
+            <Tv className="w-3.5 h-3.5" /> CashDrama
           </button>
           <button
             onClick={() => setSource("adult")}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition ${
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition whitespace-nowrap ${
               source === "adult" ? "bg-pink-500 text-white" : "text-gray-400 hover:text-white"
             }`}
           >
-            <Flame className="w-4 h-4" /> 18+
+            <Flame className="w-3.5 h-3.5" /> 18+
           </button>
         </div>
 
@@ -116,11 +132,16 @@ function SearchContent() {
               title={item.title}
               thumbnail={item.thumbnail || item.image || ""}
               slug={item.slug}
-              href={source === "anime" ? `/anime/${item.slug}` : `/watch/adult/${item.slug}`}
+              href={
+                source === "anime" ? `/anime/${item.slug}` :
+                source === "bilitv" ? `/drama/bilitv/${item.slug}` :
+                source === "cashdrama" ? `/drama/cashdrama/${item.slug}` :
+                `/watch/adult/${item.slug}`
+              }
               duration={item.duration}
               type={item.type}
               episode={item.latest_episode}
-              badge={source === "adult" ? "18+" : undefined}
+              badge={source === "adult" ? "18+" : source === "bilitv" ? "BiliTV" : source === "cashdrama" ? "CashDrama" : undefined}
             />
           ))}
         </div>

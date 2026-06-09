@@ -188,3 +188,146 @@ export async function getAnimeDetail(slug: string) {
 export async function getAnimeWatch(slug: string) {
   return fetchApi<AnimeWatchData>("/anime/watch", { slug });
 }
+
+
+// ===== Drama Types (BiliTV & CashDrama) =====
+
+export interface BiliTVDrama {
+  id: number;
+  title: string;
+  cover: string;
+  episodes: number;
+  description?: string;
+}
+
+export interface BiliTVDramaDetail {
+  id: number;
+  title: string;
+  cover: string;
+  description: string;
+  episodes: { id: number; number: number; free: boolean }[];
+}
+
+export interface BiliTVEpisodeData {
+  id: number;
+  number: number;
+  title: string;
+  video: string;
+  qualities: Record<string, string>;
+  isLocked: boolean;
+}
+
+export interface CashDrama {
+  id: string;
+  name: string;
+  cover: string;
+  coverHor?: string;
+  description?: string;
+  episodes: number;
+  isDubbing?: boolean;
+  tags?: string[];
+}
+
+export interface CashDramaDetail {
+  info: {
+    vid: string;
+    name: string;
+    cover: string;
+    coverHor: string;
+    dramaCount: string;
+    freeCount: string;
+    isDubbing: string;
+    language?: string;
+  };
+  episodes: { ep: string; vid: string; fileId: string }[];
+}
+
+export interface CashDramaPlayData {
+  vid: string;
+  ep: number;
+  name: string;
+  duration: number;
+  cover: string;
+  drmToken: string;
+  streams: unknown[];
+  adaptive: { type: string; url: string; width: number; height: number }[];
+}
+
+export interface CashDramaTag {
+  tagTypeId: string;
+  language: string;
+  tagId: string;
+  tagName: string;
+}
+
+// ===== Drama Fetch Helper =====
+async function fetchDramaApi<T>(endpoint: string, params?: Record<string, string>): Promise<T | null> {
+  try {
+    const url = new URL(`${BASE_URL}${endpoint}`);
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value) url.searchParams.append(key, value);
+      });
+    }
+
+    const res = await fetch(url.toString(), {
+      headers: { "Accept": "application/json" },
+      next: { revalidate: 300 },
+    });
+
+    if (!res.ok) return null;
+    const json = await res.json();
+
+    // CashDrama wraps in {success, data}
+    if (json.success === true && json.data) return json.data as T;
+    // BiliTV returns raw array or object with dramas
+    if (Array.isArray(json)) return json as unknown as T;
+    if (json && !json.error && !json.status && json.id !== undefined) return json as T;
+    if (json.dramas || json.total !== undefined) return json as T;
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// ===== BiliTV API =====
+export async function getBiliTVDramas(page: number = 1) {
+  return fetchDramaApi<{ total: number; page: number; dramas: BiliTVDrama[] }>("/bilitv/api/v1/home", { page: String(page) });
+}
+
+export async function getBiliTVDramaDetail(id: number) {
+  return fetchDramaApi<BiliTVDramaDetail>(`/bilitv/api/v1/drama/${id}`);
+}
+
+export async function getBiliTVEpisode(dramaId: number, episode: number) {
+  return fetchDramaApi<BiliTVEpisodeData>(`/bilitv/api/v1/drama/${dramaId}/episode/${episode}`);
+}
+
+export async function searchBiliTV(query: string) {
+  return fetchDramaApi<BiliTVDrama[]>("/bilitv/api/v1/search", { q: query });
+}
+
+// ===== CashDrama API =====
+export async function getCashDramaHome() {
+  const data = await fetchDramaApi<{ list: CashDrama[] }>("/cashdrama/api/v1/home");
+  return data?.list || null;
+}
+
+export async function getCashDramaTags() {
+  const data = await fetchDramaApi<{ list: CashDramaTag[] }>("/cashdrama/api/v1/tags");
+  return data?.list || null;
+}
+
+export async function getCashDramaDetail(vid: string) {
+  return fetchDramaApi<CashDramaDetail>(`/cashdrama/api/v1/drama/${vid}`);
+}
+
+export async function getCashDramaPlay(vid: string, ep: number) {
+  return fetchDramaApi<CashDramaPlayData>(`/cashdrama/api/v1/play/${vid}/${ep}`);
+}
+
+export async function searchCashDrama(query: string) {
+  const data = await fetchDramaApi<{ list: CashDrama[] }>("/cashdrama/api/v1/search", { q: query });
+  return data?.list || null;
+}

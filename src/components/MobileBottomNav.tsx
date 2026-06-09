@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Flame, Search, Calendar, Film } from "lucide-react";
+import { Home, Flame, Search, Film, Tv } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/anime", label: "Anime", icon: Film },
+  { href: "/drama", label: "Drama", icon: Tv },
   { href: "/search", label: "Search", icon: Search },
   { href: "/adult", label: "18+", icon: Flame },
-  { href: "/schedule", label: "Jadwal", icon: Calendar },
 ];
 
 export default function MobileBottomNav() {
