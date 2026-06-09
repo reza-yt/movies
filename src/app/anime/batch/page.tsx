@@ -9,7 +9,7 @@ interface PageProps {
 }
 
 export const metadata = {
-  title: "Anime Batch - StreamFlix",
+  title: "Anime Batch - StreamBro",
 };
 
 export default async function AnimeBatchPage({ searchParams }: PageProps) {
@@ -33,7 +33,7 @@ export default async function AnimeBatchPage({ searchParams }: PageProps) {
       </div>
 
       {animeList.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 stagger-children">
+        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4 stagger-children">
           {animeList.map((anime) => (
             <VideoCard
               key={anime.slug}

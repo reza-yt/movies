@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Calendar, Clock } from "lucide-react";
 
 export const metadata = {
-  title: "Jadwal Anime - StreamFlix",
+  title: "Jadwal Anime - StreamBro",
 };
 
 const dayOrder = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];

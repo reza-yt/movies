@@ -3,7 +3,7 @@ import Link from "next/link";
 import { BookOpen } from "lucide-react";
 
 export const metadata = {
-  title: "Anime Genres - StreamFlix",
+  title: "Anime Genres - StreamBro",
 };
 
 export default async function AnimeGenresPage() {
