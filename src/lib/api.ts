@@ -1,4 +1,5 @@
-const BASE_URL = "https://scripapi.web.id/gateway.php";
+const ANIME_BASE_URL = "https://scripapi.web.id/gateway.php";
+const ADULT_BASE_URL = "https://streamapi.web.id/p";
 
 // ===== 18+ Types =====
 export interface AdultVideo {
@@ -96,10 +97,12 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-// ===== Fetch Helper =====
-async function fetchApi<T>(endpoint: string, params?: Record<string, string>): Promise<T | null> {
+// ===== Fetch Helpers =====
+
+// Anime fetch (no auth needed, uses scripapi.web.id)
+async function fetchAnimeApi<T>(endpoint: string, params?: Record<string, string>): Promise<T | null> {
   try {
-    const url = new URL(`${BASE_URL}${endpoint}`);
+    const url = new URL(`${ANIME_BASE_URL}${endpoint}`);
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value) url.searchParams.append(key, value);
@@ -119,52 +122,85 @@ async function fetchApi<T>(endpoint: string, params?: Record<string, string>): P
   }
 }
 
+// Adult fetch (requires token, uses streamapi.web.id)
+async function fetchAdultApi<T>(endpoint: string, params?: Record<string, string>): Promise<T | null> {
+  try {
+    const token = process.env.STREAM_API_TOKEN;
+    if (!token) {
+      console.error("[StreamFlix] STREAM_API_TOKEN not set");
+      return null;
+    }
+
+    const url = new URL(`${ADULT_BASE_URL}/18plus${endpoint}`);
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value) url.searchParams.append(key, value);
+      });
+    }
+
+    const res = await fetch(url.toString(), {
+      headers: {
+        "api-token": token,
+        "Accept": "application/json",
+      },
+      next: { revalidate: 300 },
+    });
+
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json.status === "success") return json.data;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 // ===== 18+ API =====
 export async function getAdultVideos(page: number = 1) {
-  return fetchApi<AdultVideo[]>("/18plus/api/v1/videos", { page: String(page) });
+  return fetchAdultApi<AdultVideo[]>("/api/v1/videos", { page: String(page) });
 }
 
 export async function getAdultCategories() {
-  return fetchApi<AdultCategory[]>("/18plus/api/v1/categories");
+  return fetchAdultApi<AdultCategory[]>("/api/v1/categories");
 }
 
 export async function getAdultVideosByCategory(slug: string, page: number = 1) {
-  return fetchApi<AdultVideo[]>("/18plus/api/v1/category", { slug, page: String(page) });
+  return fetchAdultApi<AdultVideo[]>("/api/v1/category", { slug, page: String(page) });
 }
 
 export async function searchAdultVideos(query: string, page: number = 1) {
-  return fetchApi<AdultVideo[]>("/18plus/api/v1/search", { q: query, page: String(page) });
+  return fetchAdultApi<AdultVideo[]>("/api/v1/search", { q: query, page: String(page) });
 }
 
 export async function getAdultVideoDetail(slug: string) {
-  return fetchApi<AdultVideoDetail>("/18plus/api/v1/view", { slug });
+  return fetchAdultApi<AdultVideoDetail>("/api/v1/view", { slug });
 }
 
 // ===== Anime API =====
 export async function getAnimeHome(page: number = 1) {
-  return fetchApi<{ page: number; total_pages: number; anime: AnimeItem[] }>("/anime/home", { page: String(page) });
+  return fetchAnimeApi<{ page: number; total_pages: number; anime: AnimeItem[] }>("/anime/home", { page: String(page) });
 }
 
 export async function getAnimeBatch(page: number = 1) {
-  return fetchApi<{ page: number; total_pages: number; anime: AnimeItem[] }>("/anime/batch", { page: String(page) });
+  return fetchAnimeApi<{ page: number; total_pages: number; anime: AnimeItem[] }>("/anime/batch", { page: String(page) });
 }
 
 export async function getAnimeSchedule() {
-  return fetchApi<Record<string, AnimeScheduleItem[]>>("/anime/schedule");
+  return fetchAnimeApi<Record<string, AnimeScheduleItem[]>>("/anime/schedule");
 }
 
 export async function getAnimeGenres() {
-  return fetchApi<AnimeGenre[]>("/anime/genres");
+  return fetchAnimeApi<AnimeGenre[]>("/anime/genres");
 }
 
 export async function searchAnime(query: string, page: number = 1) {
-  return fetchApi<{ page: number; total_pages: number; anime: AnimeItem[] }>("/anime/search", { q: query, page: String(page) });
+  return fetchAnimeApi<{ page: number; total_pages: number; anime: AnimeItem[] }>("/anime/search", { q: query, page: String(page) });
 }
 
 export async function getAnimeDetail(slug: string) {
-  return fetchApi<AnimeDetail>("/anime/detail", { slug });
+  return fetchAnimeApi<AnimeDetail>("/anime/detail", { slug });
 }
 
 export async function getAnimeWatch(slug: string) {
-  return fetchApi<AnimeWatchData>("/anime/watch", { slug });
+  return fetchAnimeApi<AnimeWatchData>("/anime/watch", { slug });
 }
