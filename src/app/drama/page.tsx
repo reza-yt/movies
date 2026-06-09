@@ -1,8 +1,8 @@
-import { getBiliTVDramas, getCashDramaHome } from "@/lib/api";
+import { getBiliTVDramas, getCashDramaHome, getDramaBoxHome } from "@/lib/api";
 import VideoCard from "@/components/VideoCard";
 import SectionHeader from "@/components/SectionHeader";
 import Link from "next/link";
-import { Tv, Clapperboard } from "lucide-react";
+import { Tv, Clapperboard, Film } from "lucide-react";
 
 export const metadata = {
   title: "Drama - StreamBro",
@@ -10,13 +10,15 @@ export const metadata = {
 };
 
 export default async function DramaPage() {
-  const [biliData, cashData] = await Promise.all([
+  const [biliData, cashData, dramaBoxSections] = await Promise.all([
     getBiliTVDramas(1),
     getCashDramaHome(),
+    getDramaBoxHome(),
   ]);
 
   const biliDramas = biliData?.dramas || [];
   const cashDramas = cashData || [];
+  const dramaBoxBooks = dramaBoxSections?.[0]?.books?.slice(0, 12) || [];
 
   return (
     <div className="space-y-10">
@@ -29,7 +31,13 @@ export default async function DramaPage() {
           </h1>
           <p className="text-gray-500 mt-1 text-sm">Drama pendek dari BiliTV & CashDrama</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/drama/dramabox"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 rounded-lg text-sm font-medium transition active:scale-95"
+          >
+            <Film className="w-4 h-4" /> DramaBox
+          </Link>
           <Link
             href="/drama/bilitv"
             className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 rounded-lg text-sm font-medium transition active:scale-95"
@@ -44,6 +52,26 @@ export default async function DramaPage() {
           </Link>
         </div>
       </div>
+
+      {/* DramaBox Section */}
+      {dramaBoxBooks.length > 0 && (
+        <section>
+          <SectionHeader title="DramaBox" subtitle="Short drama HD dengan subtitle" href="/drama/dramabox" />
+          <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4 stagger-children">
+            {dramaBoxBooks.map((book) => (
+              <VideoCard
+                key={book.bookId}
+                title={book.bookName}
+                thumbnail={book.coverWap || book.cover || ""}
+                slug={book.bookId}
+                href={`/drama/dramabox/${book.bookId}`}
+                episode={book.chapterCount ? `${book.chapterCount} Ep` : undefined}
+                badge="DramaBox"
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* BiliTV Section */}
       {biliDramas.length > 0 && (

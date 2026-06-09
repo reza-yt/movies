@@ -331,3 +331,88 @@ export async function searchCashDrama(query: string) {
   const data = await fetchDramaApi<{ list: CashDrama[] }>("/cashdrama/api/v1/search", { q: query });
   return data?.list || null;
 }
+
+
+
+// ===== DramaBox V4 Types =====
+export interface DramaBoxBook {
+  bookId: string;
+  bookName: string;
+  coverWap?: string;
+  cover?: string;
+  chapterCount?: number;
+  totalEpisodes?: number;
+  introduction?: string;
+  tags?: string[];
+}
+
+export interface DramaBoxEpisode {
+  episode: number;
+  chapterId: string;
+  chapterName: string;
+  cover: string;
+  quality: number;
+  url: string;
+  subtitles?: { lang: string; url: string; isDefault: boolean; format: string }[];
+}
+
+export interface DramaBoxDetail {
+  bookId: string;
+  bookName: string;
+  cover: string;
+  description: string;
+  totalEpisodes: number;
+  quality: number;
+  episodes: DramaBoxEpisode[];
+}
+
+export interface DramaBoxSection {
+  id: number;
+  title: string;
+  books: DramaBoxBook[];
+}
+
+// ===== DramaBox V4 Fetch Helper =====
+async function fetchDramaBoxApi<T>(endpoint: string, params?: Record<string, string>): Promise<T | null> {
+  try {
+    const url = new URL(`${BASE_URL}/dramaboxv4/api${endpoint}`);
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value) url.searchParams.append(key, value);
+      });
+    }
+
+    const res = await fetch(url.toString(), {
+      headers: { "Accept": "application/json" },
+      next: { revalidate: 300 },
+    });
+
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json.code === 0 && json.data) return json.data as T;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// ===== DramaBox V4 API =====
+export async function getDramaBoxHome() {
+  const data = await fetchDramaBoxApi<{ data: { sections: DramaBoxSection[] } }>("/home");
+  return data?.data?.sections || null;
+}
+
+export async function getDramaBoxDetail(bookId: string) {
+  return fetchDramaBoxApi<DramaBoxDetail>(`/drama/${bookId}/episodes`);
+}
+
+export async function searchDramaBox(keyword: string) {
+  const data = await fetchDramaBoxApi<{ data: { searchList: unknown[] } }>("/search", { keyword });
+  if (!data?.data?.searchList) return null;
+  // Filter only book results (not actors)
+  return data.data.searchList.filter((item: any) => item.bookId) as DramaBoxBook[];
+}
+
+export async function getDramaBoxRank() {
+  return fetchDramaBoxApi<{ data: { books: DramaBoxBook[] } }>("/rank");
+}
