@@ -1,4 +1,6 @@
-const BASE_URL = "https://scripapi.web.id/gateway.php";
+import { getApiConfig } from "./stream-token";
+
+const FREE_BASE_URL = "https://scripapi.web.id/gateway.php";
 
 // ===== 18+ Types =====
 export interface AdultVideo {
@@ -96,41 +98,45 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-// ===== Fetch Helper =====
+// ===== Fetch Helper (auto-uses premium token if available) =====
 async function fetchApi<T>(endpoint: string, params?: Record<string, string>): Promise<T | null> {
   try {
-    const url = new URL(`${BASE_URL}${endpoint}`);
+    const config = await getApiConfig();
+
+    // Build URL based on whether we have premium access
+    const url = new URL(`${config.baseUrl}${endpoint}`);
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value) url.searchParams.append(key, value);
       });
     }
 
-    const headers: Record<string, string> = {
-      "Accept": "application/json",
-    };
-
-    // If STREAM_API_TOKEN is set, use streamapi.web.id for 18+ content
-    const token = process.env.STREAM_API_TOKEN;
-    let fetchUrl = url.toString();
-
-    if (token && endpoint.startsWith("/18plus")) {
-      const streamUrl = new URL(`https://streamapi.web.id/p${endpoint}`);
-      if (params) {
-        Object.entries(params).forEach(([key, value]) => {
-          if (value) streamUrl.searchParams.append(key, value);
-        });
-      }
-      fetchUrl = streamUrl.toString();
-      headers["api-token"] = token;
-    }
-
-    const res = await fetch(fetchUrl, {
-      headers,
+    const res = await fetch(url.toString(), {
+      headers: config.headers,
       next: { revalidate: 300 },
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Fallback to free API if premium fails
+      if (config.isPremium) {
+        const fallbackUrl = new URL(`${FREE_BASE_URL}${endpoint}`);
+        if (params) {
+          Object.entries(params).forEach(([key, value]) => {
+            if (value) fallbackUrl.searchParams.append(key, value);
+          });
+        }
+        const fallbackRes = await fetch(fallbackUrl.toString(), {
+          headers: { "Accept": "application/json" },
+          next: { revalidate: 300 },
+        });
+        if (!fallbackRes.ok) return null;
+        const fallbackJson = await fallbackRes.json();
+        if (fallbackJson.status === "success") return fallbackJson.data;
+        return null;
+      }
+      return null;
+    }
+
     const json = await res.json();
     if (json.status === "success") return json.data;
     return null;
@@ -260,10 +266,11 @@ export interface CashDramaTag {
   tagName: string;
 }
 
-// ===== Drama Fetch Helper =====
+// ===== Drama Fetch Helper (auto-uses premium token) =====
 async function fetchDramaApi<T>(endpoint: string, params?: Record<string, string>): Promise<T | null> {
   try {
-    const url = new URL(`${BASE_URL}${endpoint}`);
+    const config = await getApiConfig();
+    const url = new URL(`${config.baseUrl}${endpoint}`);
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value) url.searchParams.append(key, value);
@@ -271,13 +278,32 @@ async function fetchDramaApi<T>(endpoint: string, params?: Record<string, string
     }
 
     const res = await fetch(url.toString(), {
-      headers: { "Accept": "application/json" },
+      headers: config.headers,
       next: { revalidate: 300 },
     });
 
-    if (!res.ok) return null;
-    const json = await res.json();
+    if (!res.ok) {
+      // Fallback to free API
+      if (config.isPremium) {
+        const fallbackUrl = new URL(`${FREE_BASE_URL}${endpoint}`);
+        if (params) {
+          Object.entries(params).forEach(([key, value]) => {
+            if (value) fallbackUrl.searchParams.append(key, value);
+          });
+        }
+        const fRes = await fetch(fallbackUrl.toString(), { headers: { "Accept": "application/json" }, next: { revalidate: 300 } });
+        if (!fRes.ok) return null;
+        const json = await fRes.json();
+        if (json.success === true && json.data) return json.data as T;
+        if (Array.isArray(json)) return json as unknown as T;
+        if (json && !json.error && !json.status && json.id !== undefined) return json as T;
+        if (json.dramas || json.total !== undefined) return json as T;
+        return null;
+      }
+      return null;
+    }
 
+    const json = await res.json();
     // CashDrama wraps in {success, data}
     if (json.success === true && json.data) return json.data as T;
     // BiliTV returns raw array or object with dramas
@@ -372,10 +398,11 @@ export interface DramaBoxSection {
   books: DramaBoxBook[];
 }
 
-// ===== DramaBox V4 Fetch Helper =====
+// ===== DramaBox V4 Fetch Helper (auto-uses premium token) =====
 async function fetchDramaBoxApi<T>(endpoint: string, params?: Record<string, string>): Promise<T | null> {
   try {
-    const url = new URL(`${BASE_URL}/dramaboxv4/api${endpoint}`);
+    const config = await getApiConfig();
+    const url = new URL(`${config.baseUrl}/dramaboxv4/api${endpoint}`);
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value) url.searchParams.append(key, value);
@@ -383,11 +410,28 @@ async function fetchDramaBoxApi<T>(endpoint: string, params?: Record<string, str
     }
 
     const res = await fetch(url.toString(), {
-      headers: { "Accept": "application/json" },
+      headers: config.headers,
       next: { revalidate: 300 },
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Fallback to free
+      if (config.isPremium) {
+        const fallbackUrl = new URL(`${FREE_BASE_URL}/dramaboxv4/api${endpoint}`);
+        if (params) {
+          Object.entries(params).forEach(([key, value]) => {
+            if (value) fallbackUrl.searchParams.append(key, value);
+          });
+        }
+        const fRes = await fetch(fallbackUrl.toString(), { headers: { "Accept": "application/json" }, next: { revalidate: 300 } });
+        if (!fRes.ok) return null;
+        const json = await fRes.json();
+        if (json.code === 0 && json.data) return json.data as T;
+        return null;
+      }
+      return null;
+    }
+
     const json = await res.json();
     if (json.code === 0 && json.data) return json.data as T;
     return null;
