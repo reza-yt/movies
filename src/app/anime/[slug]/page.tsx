@@ -1,5 +1,4 @@
 import { getAnimeDetail } from "@/lib/api";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Calendar, Info, Play, Star, Tv } from "lucide-react";
@@ -26,13 +25,14 @@ export default async function AnimeDetailPage({ params }: PageProps) {
       <div className="flex flex-col md:flex-row gap-6">
         {/* Poster */}
         <div className="flex-shrink-0 w-48 mx-auto md:mx-0">
-          <div className="relative aspect-[2/3] rounded-xl overflow-hidden border border-white/10 shadow-2xl">
-            <Image
+          <div className="relative aspect-[2/3] rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-gray-800">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={anime.thumbnail}
               alt={anime.title}
-              fill
-              className="object-cover"
-              unoptimized
+              referrerPolicy="no-referrer"
+              loading="lazy"
+              className="absolute inset-0 w-full h-full object-cover"
             />
           </div>
         </div>

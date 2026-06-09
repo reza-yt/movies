@@ -1,6 +1,5 @@
 import { getAnimeSchedule } from "@/lib/api";
 import Link from "next/link";
-import Image from "next/image";
 import { Calendar, Clock } from "lucide-react";
 
 export const metadata = {
@@ -62,13 +61,14 @@ export default async function SchedulePage() {
                     href={`/anime/${item.slug.replace(/-episode.*$/, "").replace(/-subtitle.*$/, "")}`}
                     className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:border-red-500/30 hover:bg-red-500/5 transition-all group"
                   >
-                    <div className="flex-shrink-0 w-12 h-16 relative rounded-lg overflow-hidden">
-                      <Image
+                    <div className="flex-shrink-0 w-12 h-16 relative rounded-lg overflow-hidden bg-gray-800">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
                         src={item.thumbnail}
                         alt={item.title}
-                        fill
-                        className="object-cover"
-                        unoptimized
+                        referrerPolicy="no-referrer"
+                        loading="lazy"
+                        className="absolute inset-0 w-full h-full object-cover"
                       />
                     </div>
                     <div className="flex-1 min-w-0">

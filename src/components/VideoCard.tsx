@@ -1,6 +1,8 @@
-import Image from "next/image";
+"use client";
+
 import Link from "next/link";
 import { Play, Clock } from "lucide-react";
+import { useState } from "react";
 
 interface VideoCardProps {
   title: string;
@@ -22,18 +24,21 @@ export default function VideoCard({
   episode,
   badge,
 }: VideoCardProps) {
+  const [imgError, setImgError] = useState(false);
+
   return (
     <Link href={href} className="group card-hover block">
       <div className="relative rounded-xl overflow-hidden bg-gray-900 border border-gray-800/50 group-hover:border-red-500/30 transition-all duration-300">
         {/* Thumbnail */}
-        <div className="relative aspect-[2/3] w-full overflow-hidden">
-          <Image
-            src={thumbnail || "/placeholder.jpg"}
+        <div className="relative aspect-[2/3] w-full overflow-hidden bg-gray-800">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imgError ? "/placeholder.jpg" : (thumbnail || "/placeholder.jpg")}
             alt={title}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-110"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-            unoptimized
+            referrerPolicy="no-referrer"
+            loading="lazy"
+            onError={() => setImgError(true)}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
 
           {/* Gradient overlay */}
