@@ -1,31 +1,39 @@
 "use client";
 
 import { useState } from "react";
-import { StreamingLink } from "@/lib/api";
+import { Play, Monitor } from "lucide-react";
+import { AnimeStreamingServer } from "@/lib/api";
 
 interface VideoPlayerProps {
-  links: StreamingLink[];
+  servers: AnimeStreamingServer[];
   title: string;
 }
 
-export default function VideoPlayer({ links, title }: VideoPlayerProps) {
-  const [activeLink, setActiveLink] = useState(0);
-  const currentLink = links[activeLink];
+export default function VideoPlayer({ servers, title }: VideoPlayerProps) {
+  const validServers = servers.filter(
+    (s) => s.url && s.url.startsWith("http") && s.type === "embed"
+  );
+  const [activeServer, setActiveServer] = useState(0);
 
-  if (!currentLink) {
+  if (!validServers.length) {
     return (
-      <div className="aspect-video bg-gray-900 rounded-lg flex items-center justify-center">
-        <p className="text-gray-400">No streaming link available</p>
+      <div className="aspect-video bg-gray-900 rounded-2xl flex items-center justify-center border border-gray-800">
+        <div className="text-center">
+          <Monitor className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+          <p className="text-gray-400">No streaming server available</p>
+        </div>
       </div>
     );
   }
 
+  const current = validServers[activeServer];
+
   return (
-    <div>
+    <div className="space-y-4">
       {/* Player */}
-      <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+      <div className="relative aspect-video bg-black rounded-2xl overflow-hidden border border-gray-800 shadow-2xl shadow-black/50">
         <iframe
-          src={currentLink.url}
+          src={current.url}
           title={title}
           className="w-full h-full"
           allowFullScreen
@@ -34,24 +42,48 @@ export default function VideoPlayer({ links, title }: VideoPlayerProps) {
         />
       </div>
 
-      {/* Server/Quality Selector */}
-      {links.length > 1 && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {links.map((link, idx) => (
+      {/* Server selector */}
+      {validServers.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          <span className="text-sm text-gray-400 flex items-center gap-1.5 mr-2">
+            <Monitor className="w-4 h-4" />
+            Server:
+          </span>
+          {validServers.map((server, idx) => (
             <button
               key={idx}
-              onClick={() => setActiveLink(idx)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                idx === activeLink
-                  ? "bg-red-600 text-white"
-                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              onClick={() => setActiveServer(idx)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                idx === activeServer
+                  ? "bg-red-500 text-white shadow-lg shadow-red-500/25"
+                  : "bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10"
               }`}
             >
-              {link.server || link.quality || `Server ${idx + 1}`}
+              {server.name}
             </button>
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// HLS Player for 18+ content (m3u8)
+export function HLSPlayer({ url, title }: { url: string; title: string }) {
+  return (
+    <div className="space-y-4">
+      <div className="relative aspect-video bg-black rounded-2xl overflow-hidden border border-gray-800 shadow-2xl shadow-black/50">
+        <video
+          src={url}
+          controls
+          autoPlay
+          className="w-full h-full"
+          title={title}
+        >
+          <source src={url} type="application/x-mpegURL" />
+          Your browser does not support HLS playback.
+        </video>
+      </div>
     </div>
   );
 }

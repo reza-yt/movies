@@ -1,68 +1,104 @@
-import { getLatestVideos } from "@/lib/api";
-import VideoGrid from "@/components/VideoGrid";
+import { getAnimeHome, getAdultVideos } from "@/lib/api";
+import VideoCard from "@/components/VideoCard";
+import SectionHeader from "@/components/SectionHeader";
 import Link from "next/link";
-import { sources } from "@/lib/sources";
-import { ChevronRight } from "lucide-react";
-
-// Featured sources to show on homepage
-const featuredSources = ["movie", "reelshort", "dramabox", "anime", "drama-korea", "flextv", "shortmax", "dramanova"];
+import { Play, Zap, Film, Flame } from "lucide-react";
 
 export default async function HomePage() {
-  const results = await Promise.all(
-    featuredSources.map(async (sourceId) => {
-      const data = await getLatestVideos(sourceId, 1);
-      const source = sources.find((s) => s.id === sourceId);
-      return {
-        sourceId,
-        sourceName: source?.name || sourceId,
-        videos: Array.isArray(data?.data) ? data.data.slice(0, 6) : [],
-      };
-    })
-  );
+  const [animeData, adultData] = await Promise.all([
+    getAnimeHome(1),
+    getAdultVideos(1),
+  ]);
+
+  const animeList = animeData?.anime?.slice(0, 12) || [];
+  const adultList = adultData?.slice(0, 12) || [];
 
   return (
-    <div className="space-y-10">
-      {/* Hero */}
-      <section className="text-center py-10">
-        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
-          StreamFlix
-        </h1>
-        <p className="mt-3 text-gray-400 text-lg">
-          Watch free movies, dramas, anime & short videos from 50+ sources
-        </p>
-        <div className="flex justify-center gap-4 mt-6">
-          <Link
-            href="/sources"
-            className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-full font-medium transition"
-          >
-            Browse Sources
-          </Link>
-          <Link
-            href="/search"
-            className="px-6 py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-full font-medium transition"
-          >
-            Search Videos
-          </Link>
+    <div className="space-y-12">
+      {/* Hero Section */}
+      <section className="relative py-16 text-center overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 via-gray-950 to-black border border-white/5">
+        {/* Background effects */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-red-500/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-500/5 rounded-full blur-3xl animate-float" />
+        </div>
+
+        <div className="relative z-10">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Zap className="w-5 h-5 text-yellow-400" />
+            <span className="text-sm font-medium text-yellow-400/80">Free Streaming</span>
+          </div>
+          <h1 className="text-4xl md:text-6xl font-black gradient-text leading-tight">
+            StreamFlix
+          </h1>
+          <p className="mt-4 text-gray-400 text-lg max-w-md mx-auto leading-relaxed">
+            Nonton anime sub indo & video gratis dari berbagai sumber
+          </p>
+          <div className="flex justify-center gap-3 mt-8">
+            <Link
+              href="/anime"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold transition-all hover:shadow-lg hover:shadow-red-500/25 hover:-translate-y-0.5"
+            >
+              <Film className="w-4 h-4" />
+              Anime
+            </Link>
+            <Link
+              href="/adult"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl font-semibold transition-all hover:-translate-y-0.5"
+            >
+              <Flame className="w-4 h-4" />
+              18+
+            </Link>
+            <Link
+              href="/search"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl font-semibold transition-all hover:-translate-y-0.5"
+            >
+              <Play className="w-4 h-4" />
+              Search
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* Video sections by source */}
-      {results.map(
-        ({ sourceId, sourceName, videos }) =>
-          videos.length > 0 && (
-            <section key={sourceId}>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-white">{sourceName}</h2>
-                <Link
-                  href={`/source/${sourceId}`}
-                  className="flex items-center gap-1 text-sm text-red-400 hover:text-red-300 transition"
-                >
-                  View All <ChevronRight className="w-4 h-4" />
-                </Link>
-              </div>
-              <VideoGrid videos={videos} source={sourceId} />
-            </section>
-          )
+      {/* Latest Anime */}
+      {animeList.length > 0 && (
+        <section>
+          <SectionHeader title="Anime Terbaru" subtitle="Update terbaru sub Indonesia" href="/anime" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 stagger-children">
+            {animeList.map((anime) => (
+              <VideoCard
+                key={anime.slug}
+                title={anime.title}
+                thumbnail={anime.thumbnail || anime.image || ""}
+                slug={anime.slug}
+                href={`/anime/${anime.slug}`}
+                type={anime.type}
+                episode={anime.latest_episode}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Latest 18+ */}
+      {adultList.length > 0 && (
+        <section>
+          <SectionHeader title="18+ Terbaru" subtitle="Konten dewasa terbaru" href="/adult" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 stagger-children">
+            {adultList.map((video) => (
+              <VideoCard
+                key={video.slug}
+                title={video.title}
+                thumbnail={video.thumbnail}
+                slug={video.slug}
+                href={`/watch/adult/${video.slug}`}
+                duration={video.duration}
+                badge="18+"
+              />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

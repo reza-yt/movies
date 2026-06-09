@@ -1,108 +1,170 @@
 const BASE_URL = "https://scripapi.web.id/gateway.php";
 
-export interface Video {
-  id: string;
+// ===== 18+ Types =====
+export interface AdultVideo {
   title: string;
+  slug: string;
   thumbnail: string;
-  slug?: string;
-  duration?: string;
-  views?: string;
-  rating?: string;
-  year?: string;
-  quality?: string;
-  episodes?: number;
-  status?: string;
-  type?: string;
-  [key: string]: unknown;
+  duration: string;
+  url: string;
 }
 
-export interface Category {
-  id: string;
+export interface AdultCategory {
   name: string;
   slug: string;
-  [key: string]: unknown;
 }
 
-export interface VideoDetail {
-  id: string;
+export interface AdultVideoDetail {
+  title: string;
+  slug: string;
+  m3u8_url: string;
+  duration: string;
+  categories: AdultCategory[];
+  related_videos: AdultVideo[];
+}
+
+// ===== Anime Types =====
+export interface AnimeItem {
+  slug: string;
+  title: string;
+  thumbnail?: string;
+  image?: string;
+  type: string;
+  latest_episode?: string;
+  status?: string;
+  id?: string;
+}
+
+export interface AnimeGenre {
+  name: string;
+  slug: string;
+  count: string;
+}
+
+export interface AnimeScheduleItem {
+  slug: string;
   title: string;
   thumbnail: string;
-  description?: string;
-  slug?: string;
-  duration?: string;
-  views?: string;
-  rating?: string;
-  year?: string;
-  quality?: string;
-  episodes?: Episode[];
-  streaming_links?: StreamingLink[];
-  [key: string]: unknown;
+  episode: string;
+  release_time: string;
 }
 
-export interface Episode {
-  id: string;
+export interface AnimeDetail {
   title: string;
-  episode_number?: number;
-  streaming_links?: StreamingLink[];
-  [key: string]: unknown;
-}
-
-export interface StreamingLink {
-  url: string;
-  quality?: string;
-  server?: string;
-  [key: string]: unknown;
-}
-
-export interface ApiResponse<T> {
-  data: T;
-  status?: boolean;
-  message?: string;
-  pagination?: {
-    current_page: number;
-    last_page: number;
-    total: number;
+  thumbnail: string;
+  synopsis: string;
+  info: {
+    status: string;
+    studio: string;
+    durasi: string;
+    season: string;
+    tipe: string;
+    genres: string[];
+    [key: string]: unknown;
   };
-  [key: string]: unknown;
+  episodes: AnimeEpisode[];
 }
 
-async function fetchApi<T>(source: string, endpoint: string, params?: Record<string, string>): Promise<T | null> {
+export interface AnimeEpisode {
+  slug: string;
+  number: string;
+  title: string;
+  date: string;
+}
+
+export interface AnimeStreamingServer {
+  name: string;
+  type: string;
+  url: string;
+}
+
+export interface AnimeDownloadLink {
+  quality: string;
+  links: { provider: string; url: string }[];
+}
+
+export interface AnimeWatchData {
+  title: string;
+  streaming_servers: AnimeStreamingServer[];
+  download_links: AnimeDownloadLink[];
+}
+
+// ===== Generic Response =====
+export interface ApiResponse<T> {
+  status: string;
+  data: T;
+  message?: string;
+}
+
+// ===== Fetch Helper =====
+async function fetchApi<T>(endpoint: string, params?: Record<string, string>): Promise<T | null> {
   try {
-    const url = new URL(`${BASE_URL}/${source}${endpoint}`);
+    const url = new URL(`${BASE_URL}${endpoint}`);
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
-        url.searchParams.append(key, value);
+        if (value) url.searchParams.append(key, value);
       });
     }
 
     const res = await fetch(url.toString(), {
-      next: { revalidate: 300 }, // cache for 5 minutes
+      next: { revalidate: 300 },
     });
 
     if (!res.ok) return null;
     const json = await res.json();
-    return json;
+    if (json.status === "success") return json.data;
+    return null;
   } catch {
     return null;
   }
 }
 
-export async function getLatestVideos(source: string, page: number = 1) {
-  return fetchApi<ApiResponse<Video[]>>(source, "/api/v1/videos", { page: String(page) });
+// ===== 18+ API =====
+export async function getAdultVideos(page: number = 1) {
+  return fetchApi<AdultVideo[]>("/18plus/api/v1/videos", { page: String(page) });
 }
 
-export async function getCategories(source: string) {
-  return fetchApi<ApiResponse<Category[]>>(source, "/api/v1/categories");
+export async function getAdultCategories() {
+  return fetchApi<AdultCategory[]>("/18plus/api/v1/categories");
 }
 
-export async function getVideosByCategory(source: string, categorySlug: string, page: number = 1) {
-  return fetchApi<ApiResponse<Video[]>>(source, `/api/v1/categories/${categorySlug}`, { page: String(page) });
+export async function getAdultVideosByCategory(slug: string, page: number = 1) {
+  return fetchApi<AdultVideo[]>("/18plus/api/v1/category", { slug, page: String(page) });
 }
 
-export async function searchVideos(source: string, query: string, page: number = 1) {
-  return fetchApi<ApiResponse<Video[]>>(source, "/api/v1/search", { q: query, page: String(page) });
+export async function searchAdultVideos(query: string, page: number = 1) {
+  return fetchApi<AdultVideo[]>("/18plus/api/v1/search", { q: query, page: String(page) });
 }
 
-export async function getVideoDetail(source: string, slug: string) {
-  return fetchApi<ApiResponse<VideoDetail>>(source, `/api/v1/videos/${slug}`);
+export async function getAdultVideoDetail(slug: string) {
+  return fetchApi<AdultVideoDetail>("/18plus/api/v1/view", { slug });
+}
+
+// ===== Anime API =====
+export async function getAnimeHome(page: number = 1) {
+  return fetchApi<{ page: number; total_pages: number; anime: AnimeItem[] }>("/anime/home", { page: String(page) });
+}
+
+export async function getAnimeBatch(page: number = 1) {
+  return fetchApi<{ page: number; total_pages: number; anime: AnimeItem[] }>("/anime/batch", { page: String(page) });
+}
+
+export async function getAnimeSchedule() {
+  return fetchApi<Record<string, AnimeScheduleItem[]>>("/anime/schedule");
+}
+
+export async function getAnimeGenres() {
+  return fetchApi<AnimeGenre[]>("/anime/genres");
+}
+
+export async function searchAnime(query: string, page: number = 1) {
+  return fetchApi<{ page: number; total_pages: number; anime: AnimeItem[] }>("/anime/search", { q: query, page: String(page) });
+}
+
+export async function getAnimeDetail(slug: string) {
+  return fetchApi<AnimeDetail>("/anime/detail", { slug });
+}
+
+export async function getAnimeWatch(slug: string) {
+  return fetchApi<AnimeWatchData>("/anime/watch", { slug });
 }

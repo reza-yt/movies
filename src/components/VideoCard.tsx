@@ -1,65 +1,80 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Play } from "lucide-react";
-import { Video } from "@/lib/api";
+import { Play, Clock } from "lucide-react";
 
 interface VideoCardProps {
-  video: Video;
-  source: string;
+  title: string;
+  thumbnail: string;
+  slug: string;
+  href: string;
+  duration?: string;
+  type?: string;
+  episode?: string;
+  badge?: string;
 }
 
-export default function VideoCard({ video, source }: VideoCardProps) {
-  const slug = video.slug || video.id;
-
+export default function VideoCard({
+  title,
+  thumbnail,
+  href,
+  duration,
+  type,
+  episode,
+  badge,
+}: VideoCardProps) {
   return (
-    <Link
-      href={`/watch/${source}/${slug}`}
-      className="group relative bg-gray-900 rounded-lg overflow-hidden hover:ring-2 hover:ring-red-500 transition-all duration-200 hover:scale-[1.02]"
-    >
-      {/* Thumbnail */}
-      <div className="relative aspect-[2/3] w-full overflow-hidden">
-        <Image
-          src={video.thumbnail || "/placeholder.jpg"}
-          alt={video.title}
-          fill
-          className="object-cover group-hover:opacity-75 transition-opacity"
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-          unoptimized
-        />
-        {/* Play overlay */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="bg-red-600/90 rounded-full p-3">
-            <Play className="w-6 h-6 text-white fill-white" />
-          </div>
-        </div>
-        {/* Quality badge */}
-        {video.quality && (
-          <span className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-0.5 rounded font-medium">
-            {video.quality}
-          </span>
-        )}
-        {/* Episode count */}
-        {video.episodes && (
-          <span className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-0.5 rounded font-medium">
-            Ep {video.episodes}
-          </span>
-        )}
-      </div>
+    <Link href={href} className="group card-hover block">
+      <div className="relative rounded-xl overflow-hidden bg-gray-900 border border-gray-800/50 group-hover:border-red-500/30 transition-all duration-300">
+        {/* Thumbnail */}
+        <div className="relative aspect-[2/3] w-full overflow-hidden">
+          <Image
+            src={thumbnail || "/placeholder.jpg"}
+            alt={title}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-110"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+            unoptimized
+          />
 
-      {/* Info */}
-      <div className="p-3">
-        <h3 className="text-sm font-medium text-white line-clamp-2 group-hover:text-red-400 transition-colors">
-          {video.title}
-        </h3>
-        {(video.year || video.rating) && (
-          <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
-            {video.year && <span>{video.year}</span>}
-            {video.rating && <span>⭐ {video.rating}</span>}
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+          {/* Play button */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-75 group-hover:scale-100">
+            <div className="w-14 h-14 rounded-full bg-red-500/90 backdrop-blur-sm flex items-center justify-center shadow-xl shadow-red-500/30">
+              <Play className="w-6 h-6 text-white fill-white ml-0.5" />
+            </div>
           </div>
-        )}
-        <span className="inline-block mt-2 text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">
-          {source}
-        </span>
+
+          {/* Duration badge */}
+          {duration && (
+            <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/80 backdrop-blur-sm text-white text-xs px-2 py-0.5 rounded-md">
+              <Clock className="w-3 h-3" />
+              {duration}
+            </div>
+          )}
+
+          {/* Type badge */}
+          {(type || badge) && (
+            <div className="absolute top-2 left-2 bg-red-500/90 backdrop-blur-sm text-white text-xs px-2 py-0.5 rounded-md font-semibold">
+              {badge || type}
+            </div>
+          )}
+
+          {/* Episode badge */}
+          {episode && (
+            <div className="absolute top-2 right-2 bg-blue-500/90 backdrop-blur-sm text-white text-xs px-2 py-0.5 rounded-md font-semibold">
+              {episode}
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="p-3">
+          <h3 className="text-sm font-medium text-gray-200 line-clamp-2 group-hover:text-white transition-colors leading-snug">
+            {title}
+          </h3>
+        </div>
       </div>
     </Link>
   );
