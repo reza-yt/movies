@@ -1,6 +1,7 @@
 import { getAnimeWatch } from "@/lib/api";
 import VideoPlayer from "@/components/VideoPlayer";
 import WatchTracker from "@/components/WatchTracker";
+import CommentSection from "@/components/CommentSection";
 import Link from "next/link";
 import { Download, ArrowLeft } from "lucide-react";
 
@@ -70,6 +71,9 @@ export default async function WatchAnimePage({ params }: PageProps) {
           </div>
         </div>
       )}
+
+      {/* Comments */}
+      <CommentSection videoId={`anime/${slug}`} />
     </div>
   );
 }

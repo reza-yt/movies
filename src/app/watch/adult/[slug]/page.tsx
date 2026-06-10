@@ -2,6 +2,7 @@ import { getAdultVideoDetail } from "@/lib/api";
 import { HLSPlayer } from "@/components/VideoPlayer";
 import VideoCard from "@/components/VideoCard";
 import WatchTracker from "@/components/WatchTracker";
+import CommentSection from "@/components/CommentSection";
 import Link from "next/link";
 import { ArrowLeft, Tag } from "lucide-react";
 
@@ -86,6 +87,9 @@ export default async function WatchAdultPage({ params }: PageProps) {
           </div>
         </div>
       )}
+
+      {/* Comments */}
+      <CommentSection videoId={`adult/${slug}`} />
     </div>
   );
 }

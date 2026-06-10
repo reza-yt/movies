@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Monitor, Play } from "lucide-react";
+import EnhancedPlayer from "./EnhancedPlayer";
+import { updateProgress } from "@/lib/watch-history";
 
 interface Quality {
   label: string;
@@ -11,9 +13,10 @@ interface Quality {
 interface DramaPlayerProps {
   qualities: Quality[];
   title: string;
+  historyId?: string; // for tracking progress
 }
 
-export default function DramaPlayer({ qualities, title }: DramaPlayerProps) {
+export default function DramaPlayer({ qualities, title, historyId }: DramaPlayerProps) {
   const [activeQuality, setActiveQuality] = useState(0);
 
   if (!qualities || qualities.length === 0) {
@@ -29,20 +32,21 @@ export default function DramaPlayer({ qualities, title }: DramaPlayerProps) {
 
   const current = qualities[activeQuality];
 
+  function handleProgress(pct: number) {
+    if (historyId) {
+      updateProgress(historyId, pct);
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Player */}
-      <div className="relative aspect-[9/16] sm:aspect-video max-h-[80vh] bg-black rounded-2xl overflow-hidden border border-gray-800 shadow-2xl shadow-black/50 mx-auto">
-        <video
-          key={current.url}
-          src={current.url}
-          controls
-          autoPlay
-          playsInline
-          className="w-full h-full object-contain"
-          title={title}
-        />
-      </div>
+      <EnhancedPlayer
+        key={current.url}
+        src={current.url}
+        title={title}
+        onProgress={handleProgress}
+      />
 
       {/* Quality selector */}
       {qualities.length > 1 && (
