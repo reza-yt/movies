@@ -126,6 +126,7 @@ export default function EnhancedPlayer({ src, title, onProgress }: EnhancedPlaye
   }
 
   function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
+    e.stopPropagation();
     const video = videoRef.current;
     if (!video) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -152,7 +153,6 @@ export default function EnhancedPlayer({ src, title, onProgress }: EnhancedPlaye
       ref={containerRef}
       className="relative aspect-[9/16] sm:aspect-video max-h-[80vh] bg-black rounded-2xl overflow-hidden border border-gray-800 shadow-2xl group mx-auto"
       onMouseMove={resetHideTimer}
-      onClick={togglePlay}
     >
       <video
         ref={videoRef}
@@ -166,27 +166,31 @@ export default function EnhancedPlayer({ src, title, onProgress }: EnhancedPlaye
         onEnded={() => setPlaying(false)}
       />
 
-      {/* Controls overlay */}
+      {/* Clickable area for play/pause (covers entire video area except bottom controls) */}
       <div
-        className={`absolute inset-0 flex flex-col justify-end transition-opacity duration-300 ${
-          showControls ? "opacity-100" : "opacity-0"
+        className="absolute inset-0 bottom-16 cursor-pointer z-10"
+        onClick={togglePlay}
+      />
+
+      {/* Center play button (visual only, click handled by area above) */}
+      {!playing && showControls && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+          <div className="w-16 h-16 rounded-full bg-red-500/80 backdrop-blur-sm flex items-center justify-center shadow-2xl shadow-red-500/30">
+            <Play className="w-7 h-7 text-white fill-white ml-1" />
+          </div>
+        </div>
+      )}
+
+      {/* Bottom controls */}
+      <div
+        className={`absolute bottom-0 left-0 right-0 z-30 transition-opacity duration-300 ${
+          showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent pointer-events-none" />
 
-        {/* Center play button */}
-        {!playing && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-16 h-16 rounded-full bg-red-500/80 flex items-center justify-center">
-              <Play className="w-7 h-7 text-white fill-white ml-1" />
-            </div>
-          </div>
-        )}
-
-        {/* Bottom controls */}
-        <div className="relative z-10 p-3 sm:p-4 space-y-2">
+        <div className="relative p-3 sm:p-4 space-y-2">
           {/* Progress bar */}
           <div className="w-full h-1.5 bg-white/20 rounded-full cursor-pointer group/progress" onClick={handleSeek}>
             <div className="h-full bg-red-500 rounded-full relative transition-all" style={{ width: `${progress}%` }}>
@@ -251,8 +255,8 @@ export default function EnhancedPlayer({ src, title, onProgress }: EnhancedPlaye
         </div>
       </div>
 
-      {/* Keyboard hints (shows briefly) */}
-      <div className="absolute top-3 left-3 text-[9px] text-white/30 hidden sm:block pointer-events-none">
+      {/* Keyboard hints */}
+      <div className={`absolute top-3 left-3 text-[9px] text-white/30 hidden sm:block pointer-events-none transition-opacity ${showControls ? "opacity-100" : "opacity-0"}`}>
         Space: Play/Pause • F: Fullscreen • M: Mute • ←→: Skip 10s • P: PiP
       </div>
     </div>
