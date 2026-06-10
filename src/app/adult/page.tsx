@@ -1,6 +1,5 @@
 import { getAdultVideos, getAdultCategories } from "@/lib/api";
 import VideoCard from "@/components/VideoCard";
-import SectionHeader from "@/components/SectionHeader";
 import Pagination from "@/components/Pagination";
 import Link from "next/link";
 import { Flame, Grid } from "lucide-react";
@@ -17,12 +16,13 @@ export const metadata = {
 export default async function AdultPage({ searchParams }: PageProps) {
   const { page } = await searchParams;
   const currentPage = parseInt(page || "1");
-  const [videos, categories] = await Promise.all([
+  const [videosResult, categories] = await Promise.all([
     getAdultVideos(currentPage),
     getAdultCategories(),
   ]);
 
-  const videoList = videos || [];
+  const videoList = videosResult?.videos || [];
+  const totalPages = videosResult?.totalPages || 1;
 
   return (
     <div className="space-y-8">
@@ -32,7 +32,7 @@ export default async function AdultPage({ searchParams }: PageProps) {
           <Flame className="w-8 h-8 text-pink-500" />
           18+ Content
         </h1>
-        <p className="text-gray-500 mt-1">Konten khusus dewasa</p>
+        <p className="text-gray-500 mt-1">Konten khusus dewasa • ~9.600+ video</p>
       </div>
 
       {/* Categories row */}
@@ -75,7 +75,7 @@ export default async function AdultPage({ searchParams }: PageProps) {
         <div className="text-center py-20 text-gray-500">Tidak ada video</div>
       )}
 
-      <Pagination currentPage={currentPage} hasMore={videoList.length > 0} baseUrl="/adult" />
+      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/adult" />
     </div>
   );
 }

@@ -12,7 +12,7 @@ export default async function HomePage() {
   ]);
 
   const animeList = animeData?.anime?.slice(0, 12) || [];
-  const adultList = adultData?.slice(0, 12) || [];
+  const adultList = adultData?.videos?.slice(0, 12) || [];
   const dramaList = dramaData?.dramas?.slice(0, 12) || [];
 
   return (

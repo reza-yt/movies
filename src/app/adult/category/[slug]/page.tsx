@@ -12,8 +12,9 @@ export default async function AdultCategoryPage({ params, searchParams }: PagePr
   const { slug } = await params;
   const { page } = await searchParams;
   const currentPage = parseInt(page || "1");
-  const videos = await getAdultVideosByCategory(slug, currentPage);
-  const videoList = videos || [];
+  const result = await getAdultVideosByCategory(slug, currentPage);
+  const videoList = result?.videos || [];
+  const totalPages = result?.totalPages || 1;
   const categoryName = slug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 
   return (
@@ -44,7 +45,7 @@ export default async function AdultCategoryPage({ params, searchParams }: PagePr
         <div className="text-center py-20 text-gray-500">Tidak ada video</div>
       )}
 
-      <Pagination currentPage={currentPage} hasMore={videoList.length > 0} baseUrl={`/adult/category/${slug}`} />
+      <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl={`/adult/category/${slug}`} />
     </div>
   );
 }

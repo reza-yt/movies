@@ -146,16 +146,30 @@ async function fetchApi<T>(endpoint: string, params?: Record<string, string>): P
 }
 
 // ===== 18+ API =====
-export async function getAdultVideos(page: number = 1) {
-  return fetchApi<AdultVideo[]>("/18plus/api/v1/videos", { page: String(page) });
+// 18+ API has ~403 pages (24 videos/page, ~9600 total videos)
+const ADULT_ESTIMATED_PAGES = 403;
+
+export async function getAdultVideos(page: number = 1): Promise<{ videos: AdultVideo[]; totalPages: number } | null> {
+  const data = await fetchApi<AdultVideo[]>("/18plus/api/v1/videos", { page: String(page) });
+  if (!data) return null;
+  return {
+    videos: data,
+    totalPages: data.length > 0 ? ADULT_ESTIMATED_PAGES : page - 1,
+  };
+}
+
+export async function getAdultVideosByCategory(slug: string, page: number = 1): Promise<{ videos: AdultVideo[]; totalPages: number } | null> {
+  const data = await fetchApi<AdultVideo[]>("/18plus/api/v1/category", { slug, page: String(page) });
+  if (!data) return null;
+  // Categories have unknown total, estimate based on results
+  return {
+    videos: data,
+    totalPages: data.length > 0 ? page + 10 : page - 1, // Show ~10 more pages if has data
+  };
 }
 
 export async function getAdultCategories() {
   return fetchApi<AdultCategory[]>("/18plus/api/v1/categories");
-}
-
-export async function getAdultVideosByCategory(slug: string, page: number = 1) {
-  return fetchApi<AdultVideo[]>("/18plus/api/v1/category", { slug, page: String(page) });
 }
 
 export async function searchAdultVideos(query: string, page: number = 1) {
