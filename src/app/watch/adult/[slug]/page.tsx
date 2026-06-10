@@ -1,6 +1,7 @@
 import { getAdultVideoDetail } from "@/lib/api";
 import { HLSPlayer } from "@/components/VideoPlayer";
 import VideoCard from "@/components/VideoCard";
+import WatchTracker from "@/components/WatchTracker";
 import Link from "next/link";
 import { ArrowLeft, Tag } from "lucide-react";
 
@@ -28,6 +29,15 @@ export default async function WatchAdultPage({ params }: PageProps) {
       </Link>
 
       <h1 className="text-xl md:text-2xl font-bold">{data.title}</h1>
+
+      {/* Track watch history */}
+      <WatchTracker item={{
+        id: `adult/${slug}`,
+        source: "18+",
+        title: data.title,
+        thumbnail: "",
+        href: `/watch/adult/${slug}`,
+      }} />
 
       {/* Player */}
       <HLSPlayer url={data.m3u8_url} title={data.title} />

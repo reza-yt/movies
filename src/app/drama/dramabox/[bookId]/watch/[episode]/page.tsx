@@ -2,6 +2,8 @@ import { getDramaBoxDetail } from "@/lib/api";
 import Link from "next/link";
 import { ArrowLeft, Monitor } from "lucide-react";
 import DramaPlayer from "@/components/DramaPlayer";
+import DownloadButton from "@/components/DownloadButton";
+import WatchTracker from "@/components/WatchTracker";
 
 interface PageProps {
   params: Promise<{ bookId: string; episode: string }>;
@@ -50,6 +52,19 @@ export default async function DramaBoxWatchPage({ params }: PageProps) {
 
       {/* Player */}
       <DramaPlayer qualities={qualities} title={`${drama.bookName} - Episode ${epNumber}`} />
+
+      {/* Watch Tracker */}
+      <WatchTracker item={{
+        id: `dramabox/${bookId}/${epNumber}`,
+        source: "DramaBox",
+        title: drama.bookName,
+        thumbnail: drama.cover,
+        href: `/drama/dramabox/${bookId}/watch/${epNumber}`,
+        episode: `Episode ${epNumber}`,
+      }} />
+
+      {/* Download */}
+      <DownloadButton url={currentEp.url} title={`${drama.bookName} - Ep ${epNumber}`} quality={`${currentEp.quality}p`} />
 
       {/* Subtitle info */}
       {currentEp.subtitles && currentEp.subtitles.length > 0 && (

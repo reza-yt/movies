@@ -1,5 +1,6 @@
 import { getAnimeWatch } from "@/lib/api";
 import VideoPlayer from "@/components/VideoPlayer";
+import WatchTracker from "@/components/WatchTracker";
 import Link from "next/link";
 import { Download, ArrowLeft } from "lucide-react";
 
@@ -27,6 +28,15 @@ export default async function WatchAnimePage({ params }: PageProps) {
       </Link>
 
       <h1 className="text-xl md:text-2xl font-bold">{data.title}</h1>
+
+      {/* Track watch history */}
+      <WatchTracker item={{
+        id: `anime/${slug}`,
+        source: "Anime",
+        title: data.title,
+        thumbnail: "",
+        href: `/watch/anime/${slug}`,
+      }} />
 
       {/* Player */}
       <VideoPlayer servers={data.streaming_servers} title={data.title} />

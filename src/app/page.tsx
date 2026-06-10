@@ -1,6 +1,7 @@
 import { getAnimeHome, getAdultVideos, getBiliTVDramas } from "@/lib/api";
 import VideoCard from "@/components/VideoCard";
 import SectionHeader from "@/components/SectionHeader";
+import ContinueWatching from "@/components/ContinueWatching";
 import Link from "next/link";
 import { Play, Zap, Film, Flame, Tv } from "lucide-react";
 
@@ -17,6 +18,9 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-8 sm:space-y-12">
+      {/* Continue Watching */}
+      <ContinueWatching />
+
       {/* Hero Section */}
       <section className="relative py-10 sm:py-16 text-center overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-gray-900 via-gray-950 to-black border border-white/5">
         {/* Background effects */}
