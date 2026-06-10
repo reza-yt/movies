@@ -1,5 +1,4 @@
 import { updateSession } from "@/lib/supabase/middleware";
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
@@ -14,28 +13,29 @@ export async function middleware(request: NextRequest) {
     pathname === "/maintenance";
 
   if (!skipMaintenance) {
-    // 1. Check env var first (fastest)
+    // Check env var (if explicitly set to "true", always maintenance)
     if (process.env.MAINTENANCE_MODE === "true") {
       const url = request.nextUrl.clone();
       url.pathname = "/maintenance";
       return NextResponse.rewrite(url);
     }
 
-    // 2. Check database (site_settings table) for admin panel toggle
+    // Check database for admin panel toggle
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (supabaseUrl && serviceKey) {
       try {
-        // Direct fetch to Supabase REST API (works in Edge Runtime)
         const res = await fetch(
           `${supabaseUrl}/rest/v1/site_settings?key=eq.maintenance_mode&select=value`,
           {
             headers: {
               "apikey": serviceKey,
               "Authorization": `Bearer ${serviceKey}`,
+              "Content-Type": "application/json",
             },
-            next: { revalidate: 10 }, // Cache for 10 seconds
+            // No cache - always fresh from DB
+            cache: "no-store",
           }
         );
 
@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
           }
         }
       } catch {
-        // Ignore errors, continue normally
+        // DB error = skip, don't block site
       }
     }
   }
