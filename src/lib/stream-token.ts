@@ -1,5 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
-
 /**
  * Gets the active StreamAPI token from database.
  * Uses service role to bypass RLS (server-side only).
@@ -7,60 +5,72 @@ import { createClient } from "@supabase/supabase-js";
  */
 export async function getActiveStreamToken(): Promise<string | null> {
   // First check env var (simplest setup)
-  const envToken = process.env.STREAM_API_TOKEN;
-  
-  // If no Supabase configured, use env token
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return envToken || null;
+  const envToken = process.env.STREAM_API_TOKEN || null;
+
+  // If no Supabase configured or no service key, just use env token
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceKey) {
+    return envToken;
   }
 
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    // Use direct REST API call with timeout (faster than SDK)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000); // 3s timeout
+
+    const res = await fetch(
+      `${supabaseUrl}/rest/v1/api_tokens?is_active=eq.true&provider=eq.streamapi&order=created_at.desc&limit=1&select=id,token,expires_at`,
+      {
+        headers: {
+          "apikey": serviceKey,
+          "Authorization": `Bearer ${serviceKey}`,
+        },
+        signal: controller.signal,
+        cache: "no-store",
+      }
     );
 
-    // Get active token from DB (most recently created active one)
-    const { data: token } = await supabase
-      .from("api_tokens")
-      .select("id, token, expires_at")
-      .eq("is_active", true)
-      .eq("provider", "streamapi")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
+    clearTimeout(timeout);
 
-    if (token) {
+    if (!res.ok) return envToken;
+
+    const tokens = await res.json();
+    if (tokens && tokens.length > 0) {
+      const token = tokens[0];
+
       // Check if expired
       if (token.expires_at && new Date(token.expires_at) < new Date()) {
-        // Token expired, deactivate it
-        await supabase.from("api_tokens").update({ is_active: false }).eq("id", token.id);
-        return envToken || null;
+        return envToken;
       }
-
-      // Increment request count (fire and forget)
-      supabase.from("api_tokens").update({ 
-        request_count: 1, // Will be incremented via trigger or manual
-        last_used_at: new Date().toISOString() 
-      }).eq("id", token.id).then(() => {});
 
       return token.token;
     }
 
-    // Also check site_settings for global token
-    const { data: setting } = await supabase
-      .from("site_settings")
-      .select("value")
-      .eq("key", "stream_api_token")
-      .single();
+    // Check site_settings for global token
+    const settingsRes = await fetch(
+      `${supabaseUrl}/rest/v1/site_settings?key=eq.stream_api_token&select=value`,
+      {
+        headers: {
+          "apikey": serviceKey,
+          "Authorization": `Bearer ${serviceKey}`,
+        },
+        cache: "no-store",
+      }
+    );
 
-    if (setting?.value) {
-      return setting.value;
+    if (settingsRes.ok) {
+      const settings = await settingsRes.json();
+      if (settings?.[0]?.value) {
+        return settings[0].value;
+      }
     }
 
-    return envToken || null;
+    return envToken;
   } catch {
-    return envToken || null;
+    // Timeout or network error - fallback to env token
+    return envToken;
   }
 }
 
