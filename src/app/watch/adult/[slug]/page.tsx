@@ -31,12 +31,12 @@ export default async function WatchAdultPage({ params }: PageProps) {
 
       <h1 className="text-xl md:text-2xl font-bold">{data.title}</h1>
 
-      {/* Track watch history */}
+      {/* Track watch history - include thumbnail from related_videos or construct from slug */}
       <WatchTracker item={{
         id: `adult/${slug}`,
         source: "18+",
         title: data.title,
-        thumbnail: "",
+        thumbnail: data.related_videos?.[0]?.thumbnail || `https://cdn.kingbokep.video/thumbs/${slug}.webp`,
         href: `/watch/adult/${slug}`,
       }} />
 
