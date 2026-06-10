@@ -75,7 +75,7 @@ export default async function AdultPage({ searchParams }: PageProps) {
         <div className="text-center py-20 text-gray-500">Tidak ada video</div>
       )}
 
-      <Pagination currentPage={currentPage} hasMore={videoList.length >= 10} baseUrl="/adult" />
+      <Pagination currentPage={currentPage} hasMore={videoList.length > 0} baseUrl="/adult" />
     </div>
   );
 }
