@@ -2,6 +2,8 @@ import { getCashDramaPlay, getCashDramaDetail } from "@/lib/api";
 import Link from "next/link";
 import { ArrowLeft, Monitor } from "lucide-react";
 import DramaPlayer from "@/components/DramaPlayer";
+import WatchTracker from "@/components/WatchTracker";
+import CommentSection from "@/components/CommentSection";
 
 interface PageProps {
   params: Promise<{ vid: string; ep: string }>;
@@ -34,6 +36,7 @@ export default async function CashDramaWatchPage({ params }: PageProps) {
   }));
 
   const dramaTitle = dramaData?.info?.name || "Drama";
+  const dramaCover = dramaData?.info?.cover || "";
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-fade-up">
@@ -45,8 +48,18 @@ export default async function CashDramaWatchPage({ params }: PageProps) {
         {dramaTitle} - Episode {epNumber}
       </h1>
 
+      {/* Watch Tracker */}
+      <WatchTracker item={{
+        id: `cashdrama/${vid}/${epNumber}`,
+        source: "CashDrama",
+        title: dramaTitle,
+        thumbnail: dramaCover,
+        href: `/drama/cashdrama/${vid}/watch/${epNumber}`,
+        episode: `Episode ${epNumber}`,
+      }} />
+
       {/* Player */}
-      <DramaPlayer qualities={qualities} title={`Episode ${epNumber}`} />
+      <DramaPlayer qualities={qualities} title={`${dramaTitle} - Episode ${epNumber}`} historyId={`cashdrama/${vid}/${epNumber}`} />
 
       {/* Episode Navigation */}
       {dramaData && (
@@ -69,6 +82,9 @@ export default async function CashDramaWatchPage({ params }: PageProps) {
           </div>
         </div>
       )}
+
+      {/* Comments */}
+      <CommentSection videoId={`cashdrama/${vid}/${epNumber}`} />
     </div>
   );
 }

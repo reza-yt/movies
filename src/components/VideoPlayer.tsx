@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Play, Monitor } from "lucide-react";
+import { Monitor } from "lucide-react";
 import { AnimeStreamingServer } from "@/lib/api";
+import EnhancedPlayer from "./EnhancedPlayer";
 
 interface VideoPlayerProps {
   servers: AnimeStreamingServer[];
@@ -68,22 +69,7 @@ export default function VideoPlayer({ servers, title }: VideoPlayerProps) {
   );
 }
 
-// HLS Player for 18+ content (m3u8)
+// HLS Player for 18+ content (m3u8) - uses EnhancedPlayer
 export function HLSPlayer({ url, title }: { url: string; title: string }) {
-  return (
-    <div className="space-y-4">
-      <div className="relative aspect-video bg-black rounded-2xl overflow-hidden border border-gray-800 shadow-2xl shadow-black/50">
-        <video
-          src={url}
-          controls
-          autoPlay
-          className="w-full h-full"
-          title={title}
-        >
-          <source src={url} type="application/x-mpegURL" />
-          Your browser does not support HLS playback.
-        </video>
-      </div>
-    </div>
-  );
+  return <EnhancedPlayer src={url} title={title} />;
 }

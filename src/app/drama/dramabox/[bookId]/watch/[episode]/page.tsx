@@ -4,6 +4,7 @@ import { ArrowLeft, Monitor } from "lucide-react";
 import DramaPlayer from "@/components/DramaPlayer";
 import DownloadButton from "@/components/DownloadButton";
 import WatchTracker from "@/components/WatchTracker";
+import CommentSection from "@/components/CommentSection";
 
 interface PageProps {
   params: Promise<{ bookId: string; episode: string }>;
@@ -92,6 +93,9 @@ export default async function DramaBoxWatchPage({ params }: PageProps) {
           ))}
         </div>
       </div>
+
+      {/* Comments */}
+      <CommentSection videoId={`dramabox/${bookId}/${epNumber}`} />
     </div>
   );
 }

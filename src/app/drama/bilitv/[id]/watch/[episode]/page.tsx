@@ -1,7 +1,10 @@
 import { getBiliTVEpisode, getBiliTVDramaDetail } from "@/lib/api";
 import Link from "next/link";
-import { ArrowLeft, Play, Monitor } from "lucide-react";
+import { ArrowLeft, Monitor } from "lucide-react";
 import DramaPlayer from "@/components/DramaPlayer";
+import WatchTracker from "@/components/WatchTracker";
+import CommentSection from "@/components/CommentSection";
+import { DownloadLinks } from "@/components/DownloadButton";
 
 interface PageProps {
   params: Promise<{ id: string; episode: string }>;
@@ -40,18 +43,36 @@ export default async function BiliTVWatchPage({ params }: PageProps) {
     qualities.unshift({ label: "Default", url: epData.video });
   }
 
+  // Download links
+  const downloadLinks = qualities.map((q) => ({ label: `Download ${q.label}`, url: q.url }));
+
+  const dramaTitle = dramaData?.title || "Drama";
+
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-fade-up">
       <Link href={`/drama/bilitv/${id}`} className="inline-flex items-center gap-1.5 text-red-400 hover:text-red-300 text-sm">
-        <ArrowLeft className="w-4 h-4" /> {dramaData?.title || "Kembali"}
+        <ArrowLeft className="w-4 h-4" /> {dramaTitle}
       </Link>
 
       <h1 className="text-lg sm:text-xl font-bold">
-        {dramaData?.title || "Drama"} - Episode {epNumber}
+        {dramaTitle} - Episode {epNumber}
       </h1>
 
+      {/* Watch Tracker */}
+      <WatchTracker item={{
+        id: `bilitv/${id}/${epNumber}`,
+        source: "BiliTV",
+        title: dramaTitle,
+        thumbnail: dramaData?.cover || "",
+        href: `/drama/bilitv/${id}/watch/${epNumber}`,
+        episode: `Episode ${epNumber}`,
+      }} />
+
       {/* Player */}
-      <DramaPlayer qualities={qualities} title={`Episode ${epNumber}`} />
+      <DramaPlayer qualities={qualities} title={`${dramaTitle} - Episode ${epNumber}`} historyId={`bilitv/${id}/${epNumber}`} />
+
+      {/* Download */}
+      <DownloadLinks links={downloadLinks} title={`${dramaTitle} Ep ${epNumber}`} />
 
       {/* Episode Navigation */}
       {dramaData && (
@@ -76,6 +97,9 @@ export default async function BiliTVWatchPage({ params }: PageProps) {
           </div>
         </div>
       )}
+
+      {/* Comments */}
+      <CommentSection videoId={`bilitv/${id}/${epNumber}`} />
     </div>
   );
 }
